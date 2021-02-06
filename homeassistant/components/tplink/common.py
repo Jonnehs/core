@@ -16,7 +16,6 @@ from homeassistant.helpers.typing import HomeAssistantType
 from .const import (
     CONF_DIMMER,
     CONF_LIGHT,
-    CONF_RETRY_MAX_ATTEMPTS,
     CONF_STRIP,
     CONF_SWITCH,
     DOMAIN as TPLINK_DOMAIN,
@@ -111,13 +110,17 @@ def get_static_devices(config_data) -> SmartDevices:
 
     for type_ in [CONF_LIGHT, CONF_SWITCH, CONF_STRIP, CONF_DIMMER]:
         entry_list = []
+
         if config_data[type_]:
-            if type(config_data[type_]) is list:
-                entry_list = config_data[type_].split(",").strip()
-            else:
+            if isinstance(config_data[type_], list):
                 entry_list = config_data[type_]
+            else:
+                entry_list = config_data[type_].strip().split(",")
         for entry in entry_list:
-            host = entry["host"]
+            if isinstance(entry, dict) and "host" in entry:
+                host = entry["host"]
+            else:
+                host = entry
             try:
                 if type_ == CONF_LIGHT:
                     lights.append(SmartBulb(host))
